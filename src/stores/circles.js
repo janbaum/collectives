@@ -104,8 +104,8 @@ export const useCirclesStore = defineStore('circles', {
 		async renameCircle(collective) {
 			const collectivesStore = useCollectivesStore()
 			const response = await axios.put(
-				generateOcsUrl('apps/circles/circles/' + collective.circleId + '/name'),
-				{ value: collective.name },
+				generateOcsUrl('apps/collectives/api/v1.0/collectives/' + collective.id + '/name'),
+				{ name: collective.name },
 			)
 			this.circles.splice(
 				this.circles.findIndex((c) => c.id === response.data.ocs.data.id),
