@@ -29,8 +29,9 @@
 					</NcButton>
 				</NcEmojiPicker>
 				<NcTextField
-					v-model="newCollectiveName"
-					:label="t('collectives', 'Name of the collective')"
+					:value.sync="newCollectiveName"
+					:disabled="!(isCollectiveOwner(collective) || isCollectiveAdmin(collective))"
+					:label="getRenameLabel"
 					:error="isNameTooShort"
 					:show-trailing-button="!isNameTooShort"
 					trailing-button-icon="arrowEnd"
@@ -207,8 +208,16 @@ export default {
 			'loading',
 		]),
 
+		...mapState(useCollectivesStore, ['isCollectiveOwner', 'isCollectiveAdmin']),
+
 		emojiTitle() {
 			return this.collective.emoji ? t('collectives', 'Change emoji') : t('collectives', 'Add emoji')
+		},
+
+		getRenameLabel() {
+			return this.isCollectiveOwner(this.collective) || this.isCollectiveAdmin(this.collective)
+				? t('collectives', 'Name of the collective')
+				: t('collectives', 'Renaming is limited to admins of the team')
 		},
 
 		isNameTooShort() {
