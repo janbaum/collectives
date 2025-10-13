@@ -22,6 +22,7 @@ use OCA\Collectives\Mount\CollectiveFolderManager;
 use OCA\Collectives\Trash\PageTrashBackend;
 use OCA\Collectives\Versions\VersionsBackend;
 use OCP\App\IAppManager;
+use OCP\DB\Exception;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Events\InvalidateMountCacheEvent;
 use OCP\Files\File;
@@ -273,6 +274,43 @@ class CollectiveService extends CollectiveServiceBase {
 			$collective->setEmoji($emoji);
 		}
 
+		return $this->collectiveMapper->update($collective);
+	}
+
+	/**
+	 * @throws UnprocessableEntityException
+	 * @throws MissingDependencyException
+	 * @throws NotPermittedException
+	 * @throws NotFoundException|Exception
+	 */
+	public function renameCollective(int    $id,
+									 string $userId,
+									 string $newName): Collective {
+		$collective = $this->getCollective($id, $userId);
+
+		// check permissions, whether OWNER or ADMIN
+		if (!($this->circleHelper->isAdmin($collective->getCircleId(), $userId)
+			|| ($this->circleHelper->isOwner($collective->getCircleId(), $userId)) )) {
+				throw new NotPermittedException('Only the Owner or Admins of a collective can rename it.');
+		}
+
+		$safeName = $this->nodeHelper->sanitiseFilename($newName);
+		if ($safeName === '') {
+			throw new UnprocessableEntityException('Collective name cannot be empty.');
+		}
+
+		$this->circleHelper->renameCircle($collective->getCircleId(), $safeName, $userId);
+
+		// Invalidate mountpoint cache as we changed list of collectives (?)
+		if (class_exists(\OCP\Files\Events\InvalidateMountCacheEvent::class)) {
+			$this->eventDispatcher->dispatchTyped(new \OCP\Files\Events\InvalidateMountCacheEvent(null));
+		}
+
+		// Update local Collective-Object(?) (name comes from Circle)
+		$collective->setName($safeName);
+
+
+		$collective->setSlug($this->slugger->slug($safeName)->toString());
 		return $this->collectiveMapper->update($collective);
 	}
 

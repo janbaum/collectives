@@ -224,5 +224,9 @@ return [
 			'requirements' => ['apiVersion' => '(1.0)', 'id' => '\d+']],
 		['name' => 'publicTag#delete', 'url' => '/api/v{apiVersion}/p/collectives/{token}/tags/{id}', 'verb' => 'DELETE',
 			'requirements' => ['apiVersion' => '(1.0)', 'id' => '\d+']],
+
+		//test rename functions
+		['name' => 'collective#rename', 'url' => '/api/v{apiVersion}/collectives/{id}/name', 'verb' => 'PUT',
+			'requirements' => ['apiVersion' => '(1.0)', 'id' => '\d+']],
 	]
 ];

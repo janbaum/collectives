@@ -29,6 +29,8 @@ class CircleHelper {
 	private ?CirclesManager $circlesManager = null;
 	private string $dependencyInjectionError = '';
 
+	private CollectiveService $collectiveService;
+
 	public function __construct(ContainerInterface $appContainer) {
 		try {
 			$this->circlesManager = $appContainer->get(CirclesManager::class);
@@ -37,6 +39,36 @@ class CircleHelper {
 			$this->dependencyInjectionError = $e->getMessage();
 		}
 	}
+
+	/**
+	 * Rename a circle. Wraps Circles' service and translates exceptions.
+	 *
+	 * @throws NotPermittedException
+	 * @throws NotFoundException
+	 * @throws MissingDependencyException
+ */
+	public function renameCircle(string $circleId, string $newName,$userId): void {
+		if (is_null($this->circlesManager)) {
+			throw new MissingDependencyException($this->dependencyInjectionError);
+		}
+
+		try {
+			$this->startSession($userId);
+			$circle = $this->circlesManager->getCircle($circleId);
+			$circle->setName($newName);
+			// TODO: update name in Circles, but how??
+			// maybe like this:
+			// Doesnt work, because not reachable: $this->circleService->updateName($circleId, $newName);
+			//$this->circlesManager->updateName($circle);
+		} catch (CircleNotFoundException $e) {
+			throw new NotFoundException($e->getMessage(), 0, $e);
+		} catch (FederatedItemException|
+		RequestBuilderException $e) {
+			throw new NotPermittedException($e->getMessage(), 0, $e);
+		} finally {
+			$this->circlesManager->stopSession();
+		}
+}
 
 	/**
 	 * Use `probeCircles()` on

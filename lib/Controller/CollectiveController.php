@@ -102,6 +102,35 @@ class CollectiveController extends OCSController {
 	}
 
 	/**
+	 * Rename an existing collective
+	 *
+	 * @param int $id ID of the collective
+	 * @param string $name new name of the collective
+	 *
+	 * @return DataResponse<Http::STATUS_OK, array{collective: CollectivesCollective}, array{}>
+	 * @throws OCSNotFoundException Collective not found
+	 * @throws OCSForbiddenException Not permitted
+	 *
+	 * 200: Collective renamed
+	 */
+	#[NoAdminRequired]
+	public function rename(int $id, string $name): DataResponse {
+		$this->logger->info("Renaming collective $id to $name by $this->userId");
+
+		$collective = $this->handleErrorResponse(fn (): Collective =>
+			$this->service->renameCollective(
+				$id,
+				$this->userId,
+				$name,
+			),
+			$this->logger
+		);
+
+		return new DataResponse(['collective' => $collective]);
+	}
+
+
+	/**
 	 * Update an existing collective
 	 *
 	 * @param int $id ID of the collective
